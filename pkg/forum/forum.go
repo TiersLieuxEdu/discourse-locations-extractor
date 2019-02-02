@@ -8,7 +8,7 @@ import (
   "log"
   "net/http"
   "strings"
-  "github.com/TiersLieuxEdu/discourse-locations-extractor/tierslieuxedu/lieux"
+  "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/lieux"
 )
 
 type Post struct {

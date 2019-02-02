@@ -4,7 +4,7 @@ import (
   "encoding/csv"
   "log"
   "os"
-  "github.com/TiersLieuxEdu/discourse-locations-extractor/tierslieuxedu/forum"
+  "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/forum"
 )
 
 func main() {
