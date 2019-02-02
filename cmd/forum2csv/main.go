@@ -4,14 +4,18 @@ import (
   "fmt"
   "io/ioutil"
   "encoding/json"
+  "golang.org/x/net/html"
   "log"
   "net/http"
+  "strings"
 )
 
 type LieuInfo struct {
-  Name string
-  Latitude string
-  Longitude string
+  Name string // Name of the lab
+  Latitude string // WGS84 X coordinate
+  Longitude string // WGS84 Y coordinate
+  Web string // URL of the website of the lab
+  Forum string // URL to the forum entry for the place
   //Tags []string
 }
 
@@ -67,13 +71,74 @@ func getTopics() []Topic {
   return topics
 }
 
-func extractInfo(html string, info *LieuInfo) {
-  
+func extractInfo(htmlSrc string, info *LieuInfo) {
+  htmlReader := strings.NewReader(htmlSrc)
+  foundDefinitions := make(map[string]string)
+  z := html.NewTokenizer(htmlReader)
+  inDL := false
+  inDT := false
+  inDD := false
+  var lastKey string
+  for {
+      tt := z.Next()
+
+      switch {
+      case tt == html.ErrorToken:
+        log.Printf("data: %s\n", foundDefinitions)
+      	// End of the document, we're done
+        if val, ok := foundDefinitions["Latitude"]; ok {
+          info.Latitude = val
+        }
+        if val, ok := foundDefinitions["Longitude"]; ok {
+          info.Longitude = val
+        }
+        return
+      case tt == html.StartTagToken:
+        t :=  strings.TrimSpace(z.Token().Data)
+        isDefinitionList := t == "dl"
+        if isDefinitionList {
+            inDL = true
+        }
+        isDefinitionTerm := inDL && t == "dt"
+        if isDefinitionTerm {
+          inDT = true
+        }
+        isDefinitionData := inDL && t == "dd"
+        if isDefinitionData {
+          inDD = true
+        }
+        break
+      case tt == html.EndTagToken:
+        t :=  strings.TrimSpace(z.Token().Data)
+        isDefinitionList := t == "dl"
+        if isDefinitionList {
+            inDL = false
+        }
+        isDefinitionTerm := inDL && t == "dt"
+        if isDefinitionTerm {
+          inDT = false
+        }
+        isDefinitionData := inDL && t == "dd"
+        if isDefinitionData {
+          inDD = false
+        }
+        break
+      case tt == html.TextToken:
+        t :=  strings.TrimSpace(z.Token().Data)
+        if inDT {
+          lastKey = t
+        } else if inDD {
+          foundDefinitions[lastKey] = t
+        }
+        break
+      }
+  }
 }
 
 func getInformations(topic Topic) LieuInfo {
-  url := fmt.Sprintf("https://forum.tierslieuxedu.org/t/%d.json", topic.Id)
-  fmt.Printf("%s\n", url)
+  forumUrl := fmt.Sprintf("https://forum.tierslieuxedu.org/t/%d", topic.Id)
+  url := fmt.Sprintf("%s.json", forumUrl)
+  log.Printf("%s\n", url)
   resp, err := http.Get(url)
   if err != nil {
     log.Fatal(err)
@@ -99,13 +164,14 @@ func getInformations(topic Topic) LieuInfo {
 
   var info LieuInfo
   info.Name = topic.Title
+  info.Forum = forumUrl
   info.Latitude = "0"
   info.Longitude = "0"
 
   for _, p := range posts {
-    fmt.Printf("*");
+    log.Printf("Posts %s\n", p.Wiki);
     if (p.Wiki) {
-      fmt.Printf("%s", p.Cooked)
+      //fmt.Printf("%s\n", p.Cooked)
       extractInfo(p.Cooked, &info)
     }
   }
@@ -118,9 +184,9 @@ func main() {
   topics := getTopics()
 
   for _, value := range topics {
-    fmt.Printf("%s...\n", value.Title)
+    log.Printf("%s...\n", value.Title)
     info := getInformations(value)
-    fmt.Printf("(%s, %s)\n", info.Latitude, info.Longitude)
+    fmt.Printf("%s, %s, %s\n", info.Name, info.Latitude, info.Longitude)
   }
 
 }
