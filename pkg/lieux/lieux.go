@@ -3,7 +3,9 @@ package lieux;
 type Info struct {
   Name string // Name of the lab
   Latitude string // WGS84 X coordinate
+  Lat float64
   Longitude string // WGS84 Y coordinate
+  Long float64
   WebSite string // URL of the website of the lab
   Forum string // URL to the forum entry for the place
   //Tags []string

@@ -5,7 +5,6 @@ import (
   "log"
   gj "github.com/kpawlik/geojson"
   "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/forum"
-  "strconv"
 )
 
 func main() {
@@ -16,21 +15,11 @@ func main() {
     log.Printf("%s...\n", value.Title)
     info := forum.GetInformations(value)
 
-    lat, errLat := strconv.ParseFloat(info.Latitude, 64)
-    if errLat != nil {
-      log.Printf("Cannot convert latitude '%s' to float\n", info.Latitude)
-      continue
-    }
-    long, errLong := strconv.ParseFloat(info.Longitude, 64)
-    if errLong != nil {
-      log.Printf("Cannot convert Longitude '%s' to float\n", info.Longitude)
-      continue
-    }
-    if lat == 0 || long == 0 {
+    if info.Lat == 0 || info.Long == 0 {
       log.Println("Coordinates not set. Skipping.")
       continue
     }
-    p := gj.NewPoint(gj.Coordinate{gj.CoordType(long), gj.CoordType(lat)})
+    p := gj.NewPoint(gj.Coordinate{gj.CoordType(info.Long), gj.CoordType(info.Lat)})
     props := map[string]interface{}{"name": info.Name, "forum": info.Forum, "site": info.WebSite}
     f2 := gj.NewFeature(p, props, nil)
     fc.AddFeatures(f2)

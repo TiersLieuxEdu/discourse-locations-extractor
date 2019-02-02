@@ -7,6 +7,7 @@ import (
   "golang.org/x/net/html"
   "log"
   "net/http"
+  "strconv"
   "strings"
   "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/lieux"
 )
@@ -79,9 +80,22 @@ func extractInfo(htmlSrc string, info *lieux.Info) {
       	// End of the document, we're done
         if val, ok := foundDefinitions["Latitude"]; ok {
           info.Latitude = val
+          if lat, err := strconv.ParseFloat(info.Latitude, 64); err == nil {
+            info.Lat = lat
+          } else {
+            log.Printf("Cannot convert Latitude '%s' to float\n", info.Latitude)
+            info.Lat = 0
+          }
         }
+
         if val, ok := foundDefinitions["Longitude"]; ok {
           info.Longitude = val
+          if long, err := strconv.ParseFloat(info.Longitude, 64); err == nil {
+            info.Long = long
+          } else {
+            log.Printf("Cannot convert Longitude '%s' to float\n", info.Longitude)
+            info.Long = 0
+          }
         }
         if val, ok := foundDefinitions["Site"]; ok {
           info.WebSite = val
