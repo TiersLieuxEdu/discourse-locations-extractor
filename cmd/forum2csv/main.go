@@ -3,9 +3,11 @@ package main
 import (
   "fmt"
   "io/ioutil"
+  "encoding/csv"
   "encoding/json"
   "golang.org/x/net/html"
   "log"
+  "os"
   "net/http"
   "strings"
 )
@@ -19,6 +21,15 @@ type LieuInfo struct {
   //Tags []string
 }
 
+func (lieu LieuInfo) AsSlice() []string {
+  r := make([]string, 5)
+  r[0] = lieu.Name
+  r[1] = lieu.Latitude
+  r[2] = lieu.Longitude
+  r[3] = lieu.WebSite
+  r[4] = lieu.Forum
+  return r
+}
 
 type Post struct {
   Cooked  string
@@ -185,11 +196,20 @@ func getInformations(topic Topic) LieuInfo {
 func main() {
 
   topics := getTopics()
-
+  csvOutput := csv.NewWriter(os.Stdout)
   for _, value := range topics {
     log.Printf("%s...\n", value.Title)
     info := getInformations(value)
-    fmt.Printf("%s, %s, %s, %s, %s\n", info.Name, info.Latitude, info.Longitude, info.WebSite, info.Forum)
+    //fmt.Printf("%s, %s, %s, %s, %s\n", info.Name, info.Latitude, info.Longitude, info.WebSite, info.Forum)
+    if err := csvOutput.Write(info.AsSlice()); err != nil {
+			log.Fatalln("error writing record to csv:", err)
+		}
   }
+
+  // Write any buffered data to the underlying writer (standard output).
+	csvOutput.Flush()
+	if err := csvOutput.Error(); err != nil {
+		log.Fatal(err)
+	}
 
 }
