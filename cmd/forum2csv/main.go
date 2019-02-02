@@ -14,7 +14,7 @@ type LieuInfo struct {
   Name string // Name of the lab
   Latitude string // WGS84 X coordinate
   Longitude string // WGS84 Y coordinate
-  Web string // URL of the website of the lab
+  WebSite string // URL of the website of the lab
   Forum string // URL to the forum entry for the place
   //Tags []string
 }
@@ -91,6 +91,9 @@ func extractInfo(htmlSrc string, info *LieuInfo) {
         }
         if val, ok := foundDefinitions["Longitude"]; ok {
           info.Longitude = val
+        }
+        if val, ok := foundDefinitions["Site"]; ok {
+          info.WebSite = val
         }
         return
       case tt == html.StartTagToken:
@@ -169,7 +172,7 @@ func getInformations(topic Topic) LieuInfo {
   info.Longitude = "0"
 
   for _, p := range posts {
-    log.Printf("Posts %s\n", p.Wiki);
+    log.Printf("Posts %v\n", p.Wiki);
     if (p.Wiki) {
       //fmt.Printf("%s\n", p.Cooked)
       extractInfo(p.Cooked, &info)
@@ -186,7 +189,7 @@ func main() {
   for _, value := range topics {
     log.Printf("%s...\n", value.Title)
     info := getInformations(value)
-    fmt.Printf("%s, %s, %s\n", info.Name, info.Latitude, info.Longitude)
+    fmt.Printf("%s, %s, %s, %s, %s\n", info.Name, info.Latitude, info.Longitude, info.WebSite, info.Forum)
   }
 
 }
