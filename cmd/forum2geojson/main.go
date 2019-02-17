@@ -1,11 +1,22 @@
 package main
 
 import (
+  "encoding/json"
   "fmt"
   "log"
   gj "github.com/kpawlik/geojson"
   "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/forum"
 )
+
+// Marshal object to json string representation
+func MarshalIndent(object interface{}, indent string) (data string, err error) {
+	if t, err := json.MarshalIndent(object, "", indent); err != nil {
+		data = ""
+	} else {
+		data = string(t)
+	}
+	return
+}
 
 func main() {
 
@@ -25,7 +36,7 @@ func main() {
     fc.AddFeatures(f2)
   }
 
-  if gjstr, err := gj.Marshal(fc); err != nil {
+  if gjstr, err := MarshalIndent(fc, "  "); err != nil {
       panic(err)
   } else {
       fmt.Println(gjstr)
