@@ -4,6 +4,7 @@ import (
   "encoding/json"
   "fmt"
   "log"
+  "sort"
   gj "github.com/kpawlik/geojson"
   "github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/forum"
 )
@@ -21,6 +22,9 @@ func MarshalIndent(object interface{}, indent string) (data string, err error) {
 func main() {
 
   topics := forum.GetTopics()
+  sort.SliceStable(topics, func(i, j int) bool {
+    return topics[i].Id < topics[j].Id
+  })
   fc := gj.NewFeatureCollection([]*gj.Feature {})
   for _, value := range topics {
     log.Printf("%s...\n", value.Title)
