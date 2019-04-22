@@ -28,8 +28,10 @@ type Topic struct {
     PostStream *PostStream `json:"post_stream"`
 }
 
-func GetTopics() []Topic {
-  resp, err := http.Get("https://forum.tierslieuxedu.org/c/lieux.json")
+func GetTopicsForPage(page int) []Topic {
+  log.Printf("Getting Page %d...", page)
+  url := fmt.Sprintf("https://forum.tierslieuxedu.org/c/lieux.json?page=%d", page)
+  resp, err := http.Get(url)
   if err != nil {
   	log.Fatal(err)
   }
@@ -63,6 +65,19 @@ func GetTopics() []Topic {
   return topics
 }
 
+func GetTopics() []Topic {
+  pageIndex := 0
+  var topics []Topic
+  for {
+    topicsToAppend := GetTopicsForPage(pageIndex)
+    if len(topicsToAppend) == 0 {
+      return topics
+    }
+    pageIndex+=1
+    topics = append(topics, topicsToAppend...)
+  }
+}
+
 func extractInfo(htmlSrc string, info *lieux.Info) {
   htmlReader := strings.NewReader(htmlSrc)
   foundDefinitions := make(map[string]string)
@@ -79,7 +94,7 @@ func extractInfo(htmlSrc string, info *lieux.Info) {
         log.Printf("data: %s\n", foundDefinitions)
       	// End of the document, we're done
         if val, ok := foundDefinitions["Latitude"]; ok {
-          info.Latitude = val
+          info.Latitude = strings.Replace(val, ",", ".", -1)
           if lat, err := strconv.ParseFloat(info.Latitude, 64); err == nil {
             info.Lat = lat
           } else {
@@ -89,7 +104,7 @@ func extractInfo(htmlSrc string, info *lieux.Info) {
         }
 
         if val, ok := foundDefinitions["Longitude"]; ok {
-          info.Longitude = val
+          info.Longitude = strings.Replace(val, ",", ".", -1)
           if long, err := strconv.ParseFloat(info.Longitude, 64); err == nil {
             info.Long = long
           } else {
@@ -181,6 +196,8 @@ func GetInformations(topic Topic) lieux.Info {
     if (p.Wiki) {
       //fmt.Printf("%s\n", p.Cooked)
       extractInfo(p.Cooked, &info)
+      //log.Printf("Found %v\n", topic.Id)
+      //break;
     }
   }
 
