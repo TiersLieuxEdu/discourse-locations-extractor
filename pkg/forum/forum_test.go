@@ -176,3 +176,29 @@ func TestExtractInfoNegativeDegreesMinutesSecondsLongitude(t *testing.T) {
 		t.Errorf("Longitude shall be converted to -3.221056. Got %f (%s)", info.Long, info.Longitude)
 	}
 }
+
+func TestConvertPositionning(t *testing.T) {
+	_, err := ConvertPositionning(` 50°44'41.9"N`)
+	if err != nil {
+		t.Errorf("Position could not be converted %s", err)
+	}
+}
+
+func TestExtract3Tags(t *testing.T) {
+	var info lieux.Info
+	info.Longitude = "0.0"
+	info.Long = 10.0
+	info.Tags = make([]string, 0, 6)
+	ExtractInfo(`## Informations
+
+<dl class="h-geo" id="info">
+<dt>Site</dt><dd>https://www.example.com</dd>
+<dt>adresse</dt><dd>42 rue des communs<br/>100000  TiersLieuxEdu</dd>
+<dt>Latitude</dt><dd>50°44'41.9"N</dd>
+<dt>Longitude</dt><dd>3°13'15.8"E</dd>
+<dt>Tags</dt><dd>#tag1, #tag2, tag3</dd>
+</dl>`, &info)
+	if len(info.Tags) != 3 {
+		t.Errorf("Shall found 3 tags, got only %d: %s", len(info.Tags), info.Tags)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/lieux"
 	"golang.org/x/net/html"
@@ -114,6 +115,26 @@ func ConvertPositionning(pos string) (float64, error) {
 	return strconv.ParseFloat(pos, 64)
 }
 
+func ConvertTags(rawList string, lieu *lieux.Info) error {
+	if lieu.Tags == nil {
+		lieu.Tags = make([]string, 0, 5)
+	}
+	f := func(c rune) bool {
+		return unicode.IsSpace(c) || c == ','
+	}
+	splitted := strings.FieldsFunc(rawList, f)
+	for _, v := range splitted {
+		if strings.HasPrefix(v, "#") {
+			v = v[1:]
+		}
+		v = strings.TrimSpace(v)
+		if len(v) != 0 {
+			lieu.Tags = append(lieu.Tags, v)
+		}
+	}
+	return nil
+}
+
 func ExtractInfo(htmlSrc string, info *lieux.Info) {
 	htmlReader := strings.NewReader(htmlSrc)
 	foundDefinitions := make(map[string]string)
@@ -151,6 +172,11 @@ func ExtractInfo(htmlSrc string, info *lieux.Info) {
 			if val, ok := foundDefinitions["Site"]; ok {
 				info.WebSite = val
 			}
+
+			if val, ok := foundDefinitions["Tags"]; ok {
+				ConvertTags(val, info)
+			}
+
 			return
 		case tt == html.StartTagToken:
 			t := strings.TrimSpace(z.Token().Data)
