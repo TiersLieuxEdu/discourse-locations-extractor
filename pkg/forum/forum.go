@@ -135,6 +135,23 @@ func ConvertTags(rawList string, lieu *lieux.Info) error {
 	return nil
 }
 
+func ConvertMachines(rawList string, lieu *lieux.Info) error {
+	if lieu.Machines == nil {
+		lieu.Machines = make([]string, 0, 5)
+	}
+	f := func(c rune) bool {
+		return c == ',' || c == '/'
+	}
+	splitted := strings.FieldsFunc(rawList, f)
+	for _, v := range splitted {
+		v = strings.TrimSpace(v)
+		if len(v) != 0 {
+			lieu.Machines = append(lieu.Machines, v)
+		}
+	}
+	return nil
+}
+
 func ExtractInfo(htmlSrc string, info *lieux.Info) {
 	htmlReader := strings.NewReader(htmlSrc)
 	foundDefinitions := make(map[string]string)
@@ -177,9 +194,18 @@ func ExtractInfo(htmlSrc string, info *lieux.Info) {
 				ConvertTags(val, info)
 			}
 
+			if val, ok := foundDefinitions["Machines"]; ok {
+				ConvertMachines(val, info)
+			}
+
+			if val, ok := foundDefinitions["Adresse"]; ok {
+				info.Adresse = val
+			}
+
 			return
 		case tt == html.StartTagToken:
 			t := strings.TrimSpace(z.Token().Data)
+			//log.Printf("start tok: %s\n", t)
 			isDefinitionList := t == "dl"
 			if isDefinitionList {
 				inDL = true
@@ -195,6 +221,7 @@ func ExtractInfo(htmlSrc string, info *lieux.Info) {
 			break
 		case tt == html.EndTagToken:
 			t := strings.TrimSpace(z.Token().Data)
+			//log.Printf("end tok: %s\n", t)
 			isDefinitionList := t == "dl"
 			if isDefinitionList {
 				inDL = false
@@ -208,12 +235,20 @@ func ExtractInfo(htmlSrc string, info *lieux.Info) {
 				inDD = false
 			}
 			break
+		case tt == html.SelfClosingTagToken:
+			t := strings.TrimSpace(z.Token().Data)
+			//log.Printf("self closing tok: %s\n", t)
+			if t == "br" {
+				foundDefinitions[lastKey] += "\n"
+				break
+			}
+			break
 		case tt == html.TextToken:
 			t := strings.TrimSpace(z.Token().Data)
 			if inDT {
-				lastKey = t
+				lastKey = strings.Title(strings.ToLower(t))
 			} else if inDD {
-				foundDefinitions[lastKey] = t
+				foundDefinitions[lastKey] += t
 			}
 			break
 		}

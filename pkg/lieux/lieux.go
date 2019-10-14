@@ -9,6 +9,8 @@ type Info struct {
 	WebSite   string   // URL of the website of the lab
 	Forum     string   // URL to the forum entry for the place
 	Tags      []string // A List of tags without #
+	Machines  []string
+	Adresse   string
 }
 
 func (lieu Info) AsSlice() []string {

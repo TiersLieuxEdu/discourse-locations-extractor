@@ -202,3 +202,80 @@ func TestExtract3Tags(t *testing.T) {
 		t.Errorf("Shall found 3 tags, got only %d: %s", len(info.Tags), info.Tags)
 	}
 }
+
+func TestExtract3Machines(t *testing.T) {
+	var info lieux.Info
+	info.Longitude = "0.0"
+	info.Long = 10.0
+	info.Machines = make([]string, 0, 6)
+	ExtractInfo(`## Informations
+
+<dl class="h-geo" id="info">
+<dt>Site</dt><dd>https://www.example.com</dd>
+<dt>adresse</dt><dd>42 rue des communs<br/>100000  TiersLieuxEdu</dd>
+<dt>Latitude</dt><dd>50°44'41.9"N</dd>
+<dt>Longitude</dt><dd>3°13'15.8"E</dd>
+<dt>Machines</dt><dd>#tag1, #tag2 / tag3</dd>
+</dl>`, &info)
+	if len(info.Machines) != 3 {
+		t.Errorf("Shall found 3 machines, got only %d: %s", len(info.Machines), info.Machines)
+	}
+}
+
+func TestExtractAdresse(t *testing.T) {
+	var info lieux.Info
+	info.Longitude = "0.0"
+	info.Long = 10.0
+	info.Adresse = "abcd"
+	ExtractInfo(`## Informations
+
+<dl class="h-geo" id="info">
+<dt>Site</dt><dd>https://www.example.com</dd>
+<dt>adresse</dt><dd>42 rue des communs<br/>100000  TiersLieuxEdu</dd>
+<dt>Latitude</dt><dd>50°44'41.9"N</dd>
+<dt>Longitude</dt><dd>3°13'15.8"E</dd>
+<dt>Machines</dt><dd>#tag1, #tag2 / tag3</dd>
+</dl>`, &info)
+	if info.Adresse != "42 rue des communs\n100000  TiersLieuxEdu" {
+		t.Errorf("Expected \"42 rue des communs\\n100000  TiersLieuxEdu\", Got \"%s\"", info.Adresse)
+	}
+}
+
+func TestExtractAdresseWithReturnLine(t *testing.T) {
+	var info lieux.Info
+	info.Longitude = "0.0"
+	info.Long = 10.0
+	info.Adresse = "abcd"
+	ExtractInfo(`## Informations
+
+<dl class="h-geo" id="info">
+<dt>Site</dt><dd>https://www.example.com</dd>
+<dt>adresse</dt><dd>42 rue des communs<br/>
+100000  TiersLieuxEdu</dd>
+<dt>Latitude</dt><dd>50°44'41.9"N</dd>
+<dt>Longitude</dt><dd>3°13'15.8"E</dd>
+<dt>Machines</dt><dd>#tag1, #tag2 / tag3</dd>
+</dl>`, &info)
+	if info.Adresse != "42 rue des communs\n100000  TiersLieuxEdu" {
+		t.Errorf("Expected \"42 rue des communs\\n100000  TiersLieuxEdu\", Got \"%s\"", info.Adresse)
+	}
+}
+
+func TestExtractAdresseWithComma(t *testing.T) {
+	var info lieux.Info
+	info.Longitude = "0.0"
+	info.Long = 10.0
+	info.Adresse = "abcd"
+	ExtractInfo(`## Informations
+
+<dl class="h-geo" id="info">
+<dt>Site</dt><dd>https://www.example.com</dd>
+<dt>adresse</dt><dd>42 rue des communs, 100000  TiersLieuxEdu</dd>
+<dt>Latitude</dt><dd>50°44'41.9"N</dd>
+<dt>Longitude</dt><dd>3°13'15.8"E</dd>
+<dt>Machines</dt><dd>#tag1, #tag2 / tag3</dd>
+</dl>`, &info)
+	if info.Adresse != "42 rue des communs, 100000  TiersLieuxEdu" {
+		t.Errorf("Expected \"42 rue des communs, 100000  TiersLieuxEdu\", Got \"%s\"", info.Adresse)
+	}
+}

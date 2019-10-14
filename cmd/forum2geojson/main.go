@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -22,6 +23,7 @@ func MarshalIndent(object interface{}, indent string) (data string, err error) {
 }
 
 func main() {
+	newlineRegexp := regexp.MustCompile(`\r?\n`)
 
 	topics := forum.GetTopics()
 	sort.SliceStable(topics, func(i, j int) bool {
@@ -37,7 +39,16 @@ func main() {
 			continue
 		}
 		p := gj.NewPoint(gj.Coordinate{gj.CoordType(info.Long), gj.CoordType(info.Lat)})
-		props := map[string]interface{}{"name": info.Name, "forum": info.Forum, "site": info.WebSite, "tags": info.Tags}
+
+		theHTMLAdress := newlineRegexp.ReplaceAllString(info.Adresse, ", ")
+		props := map[string]interface{}{
+			"name": info.Name,
+			"forum": info.Forum,
+			"site": info.WebSite,
+			"tags": info.Tags,
+			"machines": info.Machines,
+			"adresse": theHTMLAdress,
+		}
 		for _, aTag := range info.Tags {
 			props[strings.ToLower(aTag)] = true
 		}
