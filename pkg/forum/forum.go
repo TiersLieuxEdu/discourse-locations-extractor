@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/lieux"
@@ -35,12 +36,14 @@ func GetTopicsForPage(page int) []Topic {
 	url := fmt.Sprintf("https://forum.tierslieuxedu.org/c/lieux.json?page=%d", page)
 	resp, err := http.Get(url)
 	if err != nil {
+		log.Printf("Cannot get the page:")
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
+		log.Printf("Cannot ReadAll bytes:")
 		log.Fatal(readErr)
 	}
 
@@ -49,18 +52,21 @@ func GetTopicsForPage(page int) []Topic {
 	var jsonRoot map[string]*json.RawMessage
 	jsonRootErr := json.Unmarshal(body, &jsonRoot)
 	if jsonRootErr != nil {
+		log.Printf("Cannot unmarshall body's json:")
 		log.Fatal(jsonRootErr)
 	}
 
 	var jsonTopicList map[string]*json.RawMessage
 	jsonTopicListErr := json.Unmarshal(*jsonRoot["topic_list"], &jsonTopicList)
 	if jsonTopicListErr != nil {
+		log.Printf("Cannot unmarshall topic_list's json:")
 		log.Fatal(jsonTopicListErr)
 	}
 
 	var topics []Topic
 	jsonTopicListTopicsErr := json.Unmarshal(*jsonTopicList["topics"], &topics)
 	if jsonTopicListTopicsErr != nil {
+		log.Printf("Cannot unmarshal topics's json:")
 		log.Fatal(jsonTopicListTopicsErr)
 	}
 
@@ -76,6 +82,7 @@ func GetTopics() []Topic {
 			return topics
 		}
 		pageIndex += 1
+		time.Sleep(1 * time.Second)
 		topics = append(topics, topicsToAppend...)
 	}
 }
@@ -261,18 +268,22 @@ func GetInformations(topic Topic) lieux.Info {
 	log.Printf("%s\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
+		log.Printf("Cannot get the topic:")
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
+		log.Printf("Cannot read bytes of topic:")
 		log.Fatal(readErr)
 	}
 
 	var topicEnhance Topic
 	jsonRootErr := json.Unmarshal(body, &topicEnhance)
 	if jsonRootErr != nil {
+		log.Printf("Cannot unmarshall json of topic's body:")
+		log.Printf("%s", body)
 		log.Fatal(jsonRootErr)
 	}
 

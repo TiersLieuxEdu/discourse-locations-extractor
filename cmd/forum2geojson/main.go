@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/TiersLieuxEdu/discourse-locations-extractor/pkg/forum"
 	gj "github.com/kpawlik/geojson"
@@ -42,18 +43,19 @@ func main() {
 
 		theHTMLAdress := newlineRegexp.ReplaceAllString(info.Adresse, ", ")
 		props := map[string]interface{}{
-			"name": info.Name,
-			"forum": info.Forum,
-			"site": info.WebSite,
-			"tags": info.Tags,
+			"name":     info.Name,
+			"forum":    info.Forum,
+			"site":     info.WebSite,
+			"tags":     info.Tags,
 			"machines": info.Machines,
-			"adresse": theHTMLAdress,
+			"adresse":  theHTMLAdress,
 		}
 		for _, aTag := range info.Tags {
 			props[strings.ToLower(aTag)] = true
 		}
 		f2 := gj.NewFeature(p, props, nil)
 		fc.AddFeatures(f2)
+		time.Sleep(1 * time.Second)
 	}
 
 	if gjstr, err := MarshalIndent(fc, "  "); err != nil {
